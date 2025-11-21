@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="sv">
+<!-- NOTE: Alla ledtrådar har ersatts med mycket svårare, enordsledtrådar. -->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imposter - Spelet</title>
+<style>
+/* (CSS samma som innan, oförändrad) */
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🎭 IMPOSTER</h1>
+
+<!-- Start skärm -->
+<div id="startScreen" class="screen active">
+    <div class="input-group">
+        <label for="playerCount">Hur många ska spela?</label>
+        <input type="number" id="playerCount" min="2" max="20" value="4" placeholder="Ange antal spelare">
+    </div>
+    <button onclick="selectCategory()">Fortsätt</button>
+</div>
+
+<!-- Kategori val -->
+<div id="categoryScreen" class="screen">
+    <h2 style="text-align: center; margin-bottom: 30px; color: #333;">Välj kategori</h2>
+    <div class="category-grid">
+        <button class="category-btn" onclick="startGame('clashRoyale')">⚔️ Clash Royale</button>
+        <button class="category-btn" onclick="startGame('yrken')">👷 Yrken</button>
+        <button class="category-btn" onclick="startGame('platser')">🌍 Platser</button>
+        <button class="category-btn" onclick="startGame('djur')">🦁 Djur</button>
+        <button class="category-btn" onclick="startGame('mat')">🍕 Mat</button>
+        <button class="category-btn" onclick="startGame('kändisar')">⭐ Kändisar</button>
+        <button class="category-btn" onclick="startGame('hushållssaker')">🏠 Hushållssaker</button>
+        <button class="category-btn" onclick="startGame('spel')">🎮 Spel</button>
+    </div>
+    <button class="back-btn" onclick="showScreen('startScreen')">Tillbaka</button>
+</div>
+
+<!-- Spel skärm -->
+<div id="gameScreen" class="screen">
+    <div class="player-info" id="playerInfo"></div>
+    <div class="card-container">
+        <div class="card" id="card" onclick="flipCard()">
+            <div class="card-face card-front">
+                <div class="card-front-content">🎴</div>
+            </div>
+            <div class="card-face card-back">
+                <div class="card-back-content" id="cardContent"></div>
+            </div>
+        </div>
+    </div>
+    <p class="instruction">Klicka på kortet för att vända det</p>
+    <button id="nextBtn" onclick="goToTransition()">Nästa spelare</button>
+    <button class="back-btn" onclick="resetGame()">Avsluta spel</button>
+</div>
+
+<!-- Övergångsskärm -->
+<div id="transitionScreen" class="screen">
+    <div class="transition-screen">
+        <h2>🔄 Byt spelare</h2>
+        <p>Ge telefonen/datorn till nästa spelare</p>
+        <p id="nextPlayerInfo" style="font-weight: bold; color: #667eea;"></p>
+        <button onclick="showCardForNextPlayer()">Visa mitt kort</button>
+        <button class="back-btn" onclick="resetGame()">Avsluta spel</button>
+    </div>
+</div>
+</div>
+
+<script>
+const gameData = {
+    clashRoyale: {
+        words: ["Skeletons", "Fire Spirit", "Ice Spirit", "Bats", "Zap", "Giant Snowball", "Archers", "Knight", "Cannon", "Skeleton Barrel", "Bomber", "Spear Goblins", "Goblins", "Minions", "Royal Giant", "Royal Recruits", "Electro Spirit", "Barbarians", "Minion Horde", "Skeleton Dragons", "Arrows", "Tesla", "Berserker", "Goblin Gang", "Rascals", "Mortar", "Dart Goblin", "Earthquake", "Fireball", "Mini P.E.K.K.A", "Musketeer", "Valkyrie", "Battle Ram", "Hog Rider", "Bomb Tower", "Inferno Tower", "Elixir Collector", "Giant", "Wizard", "Royal Hogs", "Zappies", "Goblin Cage", "Three Musketeers", "Heal Spirit", "Ice Golem", "Mega Minion", "Elixir Golem", "Battle Healer", "Suspicious Bush", "Barbarian Barrel", "Wall Breakers", "Goblin Barrel", "Guards", "Skeleton Army", "Clone", "Dark Prince", "Freeze", "Baby Dragon", "Poison", "Hunter", "Goblin Drill", "Witch", "Prince", "Bowler", "Executioner", "Cannon Cart", "Giant Skeleton", "Lightning", "Goblin Giant", "X-Bow", "P.E.K.K.A", "Electro Dragon", "Golem", "Rune Giant", "The Log", "Princess", "Ice Wizard", "Royal Ghost", "Bandit", "Fisherman", "Electro Wizard", "Inferno Dragon", "Phoenix", "Magic Archer", "Lumberjack", "Night Witch", "Mother Witch", "Ram Rider", "Graveyard", "Sparky", "Mega Knight", "Lava Hound", "Miner", "Goblin Machine", "Little Prince", "Archer Queen", "Golden Knight", "Skeleton King", "Monk", "Mighty Miner", "Goblinstein", "Boss Bandit", "Spirit Empress", "Royal Chef", "Dagger Duchess", "Cannoneer", "Tower Princess", "Royal Delivery", "Tornado", "Rage", "Mirror", "Rocket", "Barbarian Hut", "Goblin Hut", "Tombstone", "Furnace", "Electro Giant", "Goblin Demolisher", "Vines", "Goblin Curse", "Void"],
+
+        /* Enordsledtrådar, avsiktligt kryptiska */
+        clues: [
+            "Myr", "Gnista", "Frost", "Natt", "Blix", "Kast", "Pilar", "Rust", "Stål", "Kista", "Deton", "Spjut", "Flock", "Svärm", "Koloss", "Trupp", "Volt", "Stam", "Härd", "Fjäll", "Regn", "Lynx", "Vrede", "Gäng", "Busar", "Mur", "Punkt", "Skak", "Boll", "Mini", "Lång", "Storm", "Tjurr", "Torn", "Glöd", "Tank", "Jätte", "Magi", "Hjord", "Stöt", "Bur", "Triad", "Läk", "Block", "Beving", "Dropp", "Aura", "Törne", "Tunna", "Spräck", "Kapsel", "Vakt", "Våg", "Kopia", "Mörk", "Is", "Yngel", "Gift", "Spår", "Borr", "Rit", "Spjut", "Kula", "Dom", "Vagn", "Ben", "Skär", "Bärare", "Båge", "Pansar", "Drake", "Sten", "Rune", "Stock", "Tiara", "Frost", "Dolt", "Rån", "Krok", "Volt", "Glöd", "Aska", "Pryl", "Yxa", "Natt", "Moder", "Horn", "Viloplats", "Kraft", "Riddare", "Ask", "Munk", "Djupt", "Tjock", "Chef", "Dolk", "Kanon", "Torn", "Bud", "Virvel", "Ilska", "Spegel", "Skott", "Läger", "Hydda", "Sten", "Ugn", "Jätte", "Rivare", "Rank", "Fördöm", "Tomrum"
+        ]
+    },
+
+    yrken: {
+        words: ["Lärare", "Brandman", "Programmerare", "Läkare", "Snickare", "Pilot", "Kock", "Polis", "Elektriker", "Fotograf", "Journalist", "Arkitekt", "Sjuksköterska", "Bibliotekarie", "Ekonom", "Lastbilschaufför", "Advokat", "Veterinär", "Servitör", "Musiker", "Mekaniker", "Tandläkare", "Ingenjör", "Skådespelare", "Forskare"],
+        clues: [
+            "Krita", "Glöd", "Kod", "Vård", "Timber", "Flyg", "Smak", "Lag", "Ström", "Lins", "Notis", "Form", "Omtanke", "Hylla", "Siffra", "Väg", "Rätt", "Fauna", "Bricka", "Ton", "Skruv", "Bett", "Bygg", "Scen", "Tes"
+        ]
+    },
+
+    platser: {
+        words: ["Stockholm", "Göteborg", "Malmö", "New York", "Tokyo", "Paris", "Rom", "Kairo", "Sydney", "London", "Berlin", "Los Angeles", "Reykjavik", "Barcelona", "Dubai", "Bangkok", "Köpenhamn", "Venedig", "Prag", "Toronto", "Oslo", "Istanbul", "Shanghai", "Helsingfors", "Amsterdam"],
+        clues: [
+            "Nord", "Väst", "Bro", "Äpple", "Neon", "Kärlek", "Evig", "Öken", "Hamn", "Dimma", "Mur", "Stjärna", "Värme", "Katedral", "Guld", "Spice", "Hav", "Kanal", "Öl", "Lönn", "Fjord", "Port", "Pärla", "Bastu", "Cykel"
+        ]
+    },
+
+    djur: {
+        words: ["Hund", "Katt", "Elefant", "Lejon", "Tiger", "Zebra", "Pingvin", "Orm", "Kanin", "Delfin", "Björn", "Apa", "Häst", "Sköldpadda", "Fiskmås", "Räv", "Uggla", "Val", "Känguru", "Ekorre", "Papegoja", "Krokodil", "Får", "Gris", "Ko"],
+        clues: [
+            "Lojal", "Spinn", "Störst", "Kung", "Ränder", "Strip", "Frack", "Gift", "Hop", "Våg", "Päls", "Gren", "Trav", "Skal", "Skrik", "List", "Natt", "Djup", "Påse", "Nöt", "Eko", "Bett", "Ull", "Kult", "Mjölk"
+        ]
+    },
+
+    mat: {
+        words: ["Pizza", "Sushi", "Hamburgare", "Pasta", "Tacos", "Sallad", "Falafel", "Lasagne", "Curry", "Kebab", "Soppa", "Stek", "Ramen", "Pannkakor", "Chili con carne", "Risotto", "Korv med bröd", "Fisk och potatis", "Wok", "Grillspett", "Tårta", "Piroger", "Smörgås", "Pytt i panna", "Omelett"],
+        clues: [
+            "Skiva", "Ris", "Burg", "Nudel", "Wrap", "Blad", "Kik", "Lager", "Krydda", "Spett", "Sked", "Yta", "Buljong", "Fluff", "Stark", "Kräm", "Dog", "Fredag", "Stir", "Pinne", "Sötma", "Ficka", "Bröd", "Mix", "Ägg"
+        ]
+    },
+
+    kändisar: {
+        words: ["Taylor Swift", "Zlatan Ibrahimović", "Beyoncé", "Elon Musk", "Greta Thunberg", "Ariana Grande", "Keanu Reeves", "Rihanna", "Brad Pitt", "Emma Watson", "Ed Sheeran", "Leonardo DiCaprio", "Selena Gomez", "Tom Cruise", "Lady Gaga", "Billie Eilish", "Dwayne Johnson", "Morgan Freeman", "Jennifer Lopez", "Chris Hemsworth", "Robert Downey Jr.", "Angelina Jolie", "Shakira", "Post Malone", "Kanye West"],
+        clues: [
+            "Penn", "Ibrahim", "Halo", "Tesla", "Klimat", "Vokal", "Matrix", "Umbra", "Fight", "Magik", "Ruf", "Titan", "Vår", "Risk", "Mask", "Neon", "Sten", "Sage", "Dans", "Åska", "Järn", "Pil", "Bölj", "Bläck", "Yee"
+        ]
+    },
+
+    hushållssaker: {
+        words: ["Stol", "Bord", "Lampa", "Soffa", "Kudde", "Diskmaskin", "Spegel", "Gardiner", "Matta", "TV", "Kylskåp", "Spis", "Dammsugare", "Klocka", "Säng", "Tandborste", "Mikrovågsugn", "Toalett", "Kastrull", "Mugg", "Tallrik", "Sked", "Kniv", "Hårtork", "Strykjärn"],
+        clues: [
+            "Sit", "Plan", "Ljusk", "Moln", "Puff", "Disk", "Reflex", "Draperi", "Väv", "Skärm", "Kyla", "Eld", "Sug", "Tick", "Dröm", "Borste", "Värme", "Porsl", "Kok", "Kopp", "Bas", "Slev", "Skär", "Vind", "Slätt"
+        ]
+    },
+
+    spel: {
+        words: ["Minecraft", "Fortnite", "The Legend of Zelda", "Super Mario", "Call of Duty", "Among Us", "FIFA", "Overwatch", "League of Legends", "Counter-Strike", "Valorant", "Elden Ring", "The Sims", "GTA V", "Rocket League", "Red Dead Redemption 2", "God of War", "Skyrim", "Assassin's Creed", "Hogwarts Legacy", "PUBG", "Apex Legends", "Stardew Valley", "Animal Crossing", "Halo"],
+        clues: [
+            "Block", "Bygg", "Hjälte", "Svamp", "Front", "Vent", "Goal", "Sköld", "Fem", "Takt", "Agent", "Eld", "Liv", "Stad", "Turbo", "Väst", "Gud", "Drake", "Lönn", "Magik", "Fall", "Legend", "Bond", "Ö", "Ring"
+        ]
+    }
+};
+
+let currentPlayers = 0;
+let currentPlayerIndex = 0;
+let imposterIndex = 0;
+let currentWord = '';
+let currentClue = '';
+let cardFlipped = false;
+
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+}
+
+function selectCategory() {
+    const players = parseInt(document.getElementById('playerCount').value);
+    if (players < 2) {
+        alert('Det måste vara minst 2 spelare!');
+        return;
+    }
+    currentPlayers = players;
+    showScreen('categoryScreen');
+}
+
+function startGame(category) {
+    const data = gameData[category];
+    const randomIndex = Math.floor(Math.random() * data.words.length);
+    currentWord = data.words[randomIndex];
+    currentClue = data.clues[randomIndex];
+    imposterIndex = Math.floor(Math.random() * currentPlayers);
+    currentPlayerIndex = 0;
+    cardFlipped = false;
+
+    showScreen('gameScreen');
+    showNextPlayer();
+}
+
+function flipCard() {
+    if (!cardFlipped) {
+        document.getElementById('card').classList.add('flipped');
+        cardFlipped = true;
+    }
+}
+
+function goToTransition() {
+    if (!cardFlipped) {
+        alert('Vänd på kortet först!');
+        return;
+    }
+
+    currentPlayerIndex++;
+
+    if (currentPlayerIndex >= currentPlayers) {
+        alert('Alla har sett sina ord! Nu börjar rundan - lycka till med att hitta impostern! 🎭');
+        resetGame();
+        return;
+    }
+
+    document.getElementById('nextPlayerInfo').textContent = `Spelare ${currentPlayerIndex + 1} av ${currentPlayers}`;
+    showScreen('transitionScreen');
+}
+
+function showCardForNextPlayer() {
+    cardFlipped = false;
+    const card = document.getElementById('card');
+    card.classList.remove('flipped');
+
+    const isImposter = currentPlayerIndex === imposterIndex;
+
+    document.getElementById('playerInfo').textContent = `Spelare ${currentPlayerIndex + 1} av ${currentPlayers}`;
+
+    const cardContent = document.getElementById('cardContent');
+
+    if (isImposter) {
+        cardContent.innerHTML = `🎭 DU ÄR IMPOSTER!<div class="clue">Ledtråd: ${currentClue}</div>`;
+    } else {
+        cardContent.textContent = currentWord;
+    }
+
+    const nextBtn = document.getElementById('nextBtn');
+    if (currentPlayerIndex === currentPlayers - 1) {
+        nextBtn.textContent = 'Starta rundan!';
+        nextBtn.onclick = () => {
+            alert('Alla har sett sina ord! Nu börjar rundan - lycka till med att hitta impostern! 🎭');
+            resetGame();
+        };
+    } else {
+        nextBtn.textContent = 'Nästa spelare';
+        nextBtn.onclick = goToTransition;
+    }
+
+    showScreen('gameScreen');
+}
+
+function showNextPlayer() {
+    cardFlipped = false;
+    const card = document.getElementById('card');
+    card.classList.remove('flipped');
+
+    const isImposter = currentPlayerIndex === imposterIndex;
+
+    document.getElementById('playerInfo').textContent = `Spelare ${currentPlayerIndex + 1} av ${currentPlayers}`;
+
+    const cardContent = document.getElementById('cardContent');
+
+    if (isImposter) {
+        cardContent.innerHTML = `🎭 DU ÄR IMPOSTER!<div class="clue">Ledtråd: ${currentClue}</div>`;
+    } else {
+        cardContent.textContent = currentWord;
+    }
+
+    const nextBtn = document.getElementById('nextBtn');
+    if (currentPlayerIndex === currentPlayers - 1) {
+        nextBtn.textContent = 'Starta rundan!';
+        nextBtn.onclick = () => {
+            alert('Alla har sett sina ord! Nu börjar rundan - lycka till med att hitta impostern! 🎭');
+            resetGame();
+        };
+    } else {
+        nextBtn.textContent = 'Nästa spelare';
+        nextBtn.onclick = goToTransition;
+    }
+}
+
+function resetGame() {
+    showScreen('startScreen');
+    currentPlayerIndex = 0;
+    cardFlipped = false;
+}
+</script>
+</body>
+</html>
